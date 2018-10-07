@@ -184,9 +184,11 @@ def endor_process():
         xdim = list(map(float, get_from_dict('XPTS')))
         xdim = float(xdim[0])
         xdim_string = str(xdim)
+        
         """should serve to get the largest dimension and pad the smaller data
         set with zeroes before subtracting them. Should be able to graph this
         new, subtrated data set (just one line, only works for 2 inputs)."""
+        
         for i in range(0,len(filenames)):
             length_0 = len(xdim_string[0])
             length_i = len(xdim_string[i])
@@ -197,7 +199,7 @@ def endor_process():
                     pad = abs(length_0 - length_i)
                 else:
                     0
-                #run as for I in the range of the # of files, and then re-pull xmin?
+        #run as for I in the range of the # of files, and then re-pull xmin?
         xdim_pad = np.pad(xdim, (pad, pad), 'constant')
         #return xdim_pad
         xmin = list(map(float, get_from_dict('XMIN')))
@@ -260,6 +262,11 @@ def endor_process():
 for i in range(0,len(filenames)):
     filename = filenamelist[i]
     processed[i], endorfreqx[i], freqx[i] = endor_process()
+    
+
+processed_subtracted = [(processed[0]) - (processed[1])]
+plt.figure(3)
+plt.plot(freqx[0], processed_subtracted[0], linewidth=1)
 
 
 root.destroy()
