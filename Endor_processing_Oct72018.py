@@ -273,4 +273,5 @@ root.destroy()
 
 
 #this works well; it doesn't subtract things yet though.
+# needs to be tested with files of different sizes to really see if it works
 # this needs to be tested for actual use; can we run from github, or have to copy to python?
