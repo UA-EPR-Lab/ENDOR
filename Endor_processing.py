@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 21 10:32:01 2018
+Created on Sat Oct 27 10:56:57 2018
 
-@author: Others
+@author: Joe
 """
 
 """processes ENDOR files from the raw data file. Takes Bruker .DTA files and
@@ -166,10 +166,10 @@ def endor_process():
 
     def smooth(processed):
         """smoothes using a Savitsky-Golay filter. the default is to fit a 4th
-        order polynomial over 6 points. this can be changed depending on how
+        order polynomial over an odd number of points. this can be changed depending on how
         much you want to smooth. Increase the number of points to smooth more
         """
-        smoothed = savgol_filter(processed, 7, 4)
+        smoothed = savgol_filter(processed, 45, 6)
         # For future this could be a window that you type the order and the
         # number of points into, and then it will plot it to show you the
         #smooth before moving on
@@ -184,22 +184,7 @@ def endor_process():
         xdim = list(map(float, get_from_dict('XPTS')))
         xdim = float(xdim[0])
         xdim_string = str(xdim)
-        
-        """should serve to get the largest dimension and pad the smaller data
-        set with zeroes before subtracting them. Should be able to graph this
-        new, subtrated data set (just one line, only works for 2 inputs)."""
-        
-        for i in range(0,len(filenames)):
-            length_0 = len(xdim_string[0])
-            length_i = len(xdim_string[i])
-            if length_0 / length_i == 1:
-                pad = 0
-            else:
-                if length_0 - length_i != 0:
-                    pad = abs(length_0 - length_i)
-                else:
-                    0
-        #run as for I in the range of the # of files, and then re-pull xmin?
+        pad = 0
         xdim_pad = np.pad(xdim, (pad, pad), 'constant')
         #return xdim_pad
         xmin = list(map(float, get_from_dict('XMIN')))
@@ -207,8 +192,8 @@ def endor_process():
         xrange = list(map(float, get_from_dict('XWID')))
         xrange = float(xrange[0])
         xstep = xrange/(xdim_pad-1)
-        freqx = (np.arange(xmin, xmin+xdim_pad*xstep, xstep))
-        return freqx
+        freqx_n = (np.arange(xmin, xmin+xdim_pad*xstep, xstep))
+        return freqx_n
 
 
     def calc_endorfreq():
@@ -219,21 +204,20 @@ def endor_process():
         b0vl = float(str(get_from_dict('B0VL')))
         endorfreq = (300*b0vl)/7.046
         endorfreqx = (endorfreq-freqx) * (-1)
+        #endor_max = np.where(endorfreqx == np.max(endorfreqx))
         return endorfreqx
+    
 
-
-    # def pad_axis():
-    #     """should serve to get the largest dimension and pad the smaller data
-    #     set with zeroes before subtracting them. Should be able to graph this
-    #     new, subtrated data set (just one line, only works for 2 inputs)."""
-    #     xdim = list(map(float, get_from_dict('XPTS')))
-    #     xdim = float(xdim[0])
-    #     xdim_pad = (if (xdim(0) / xdim(i) != 1:
-    #                 pad = if (xdim(0) - xdim(i) > 0
-    #                           abs(xdim(0) - xdim(i))
-    #                           else = 0)
-    #                 np.pad(xdim, (pad, pad) 'constant')))
-    #     return xdim_pad
+#    def pad_axis():
+#         """should serve to get the largest dimension and pad the smaller data
+#         set with zeroes before subtracting them. Should be able to graph this
+#         new, subtrated data set (just one line, only works for 2 inputs)."""
+#         xdim = list(map(float, get_from_dict('XPTS')))
+#         xdim = float(xdim[0])
+#         xstep = xrange/(xdim_pad-1)
+#         endor_max0 = np.where(endorfreqx[0] == np.max(endorfreqx[0]))
+#         endor_max1 = np.where(endorfreqx[1] == np.max(endorfreqx[1]))
+#         #return xdim_pad
 
 
     
@@ -248,6 +232,7 @@ def endor_process():
     freqx = buildxy()
     endorfreqx = calc_endorfreq()
     processed = smoothed
+#    pad_def = pad_axis()
 
     expx = np.arange(0, len(processed))
 
@@ -255,14 +240,23 @@ def endor_process():
     plt.plot(endorfreqx, processed, linewidth=2)
     plt.figure(2)
     plt.plot(freqx, processed, linewidth=2)
-    plt.show()
+    plt.show() #will want to put ths entire plotting section after the 
+    # different file sizes function
 
     return processed, endorfreqx, freqx
 
 for i in range(0,len(filenames)):
     filename = filenamelist[i]
     processed[i], endorfreqx[i], freqx[i] = endor_process()
-    
+
+def different_file_sizes ():
+    for i in range(0,len(filenames)):
+        endor_max = np.where(processed == np.max(processed[i]))
+        return endor_max #and endor_max[i]
+endor_max = different_file_sizes()
+# do this out here, but use acubic spline to create ideal data then generate based on user input where you want to graph
+
+
 
 processed_subtracted = [(processed[0]) - (processed[1])]
 plt.figure(3)
