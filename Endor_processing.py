@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.optimize import minimize
 from scipy.signal import savgol_filter
+from scipy import integrate
+
 
 # Choose Files
 root = tk.Tk()
@@ -293,13 +295,23 @@ for i in range(0,len(filenames)):
 # # do this out here, but use acubic spline to create ideal data then generate based on user input where you want to graph
 
 
-
 processed_subtracted = [(processed[0]) - (processed[1])]
 plt.figure(4)
 plt.plot(freqx[0], processed_subtracted[0], linewidth=1)
 plt.title('Subtraction from RF')
 
-
+def optimize_smooth():
+    """this should, ideally, compare the integral of the selection of points
+    [i,i+1] to the total integral of the range [0, end] and generate a ratio.
+    this ratio should then be able to be used to determine whether the new 
+    smoothing should be applied to the selection. Hopefully this will extra-smooth
+    the edges of the signal where there is little emphasis, and can make those
+    edge ranges the same so that when they are subtracted, there is a straight
+    line at 0 which should make for 'pretty' comparison spectra. We'll see how this goes"""
+    for i in range(0, len(processed)):  
+        xstep = float((max(freqx[0]) - min(freqx[0]))) / float(len(freqx[0]))
+        int_point = integrate.simps(y_spline[0], x_spline[0], dx = xstep, even = 'avg')
+optimize_smoothed = optimize_smooth()
 root.destroy()
 
 
