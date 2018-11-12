@@ -15,6 +15,7 @@ processes them."""
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import simpledialog
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
@@ -208,6 +209,11 @@ def endor_process():
         try:
             b0vl = float(str(get_from_dict('B0VL')))
         except:
+            root = tk.Tk()
+            root.withdraw()
+            b0vl = (float(simpledialog.askstring("Bruke Error",
+                                                "Enter Magnetic Field, G",
+                                                parent=root))/10000)
             b0vl = int(input('Bruker Error, input Magnetic Field: '))
             # when we get the GUI all the way together, we can add this as a 
             # function of a pop-up error window with direct input.
