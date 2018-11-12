@@ -204,7 +204,14 @@ def endor_process():
         created in the beginning of the script to find the magnetic field to
         use in the calulation. Returns a frequency x-axis that is centered
         at the nucelar ENDOR frequency."""
-        b0vl = float(str(get_from_dict('B0VL')))
+        
+        try:
+            b0vl = float(str(get_from_dict('B0VL')))
+        except:
+            b0vl = int(input('Bruker Error, input Magnetic Field: '))
+            # when we get the GUI all the way together, we can add this as a 
+            # function of a pop-up error window with direct input.
+            # this should allow an input directly in spyder, and is a band-aid
         endorfreq = (300*b0vl)/7.046
         endorfreqx = (endorfreq-freqx) * (-1)
         #endor_max = np.where(endorfreqx == np.max(endorfreqx))
