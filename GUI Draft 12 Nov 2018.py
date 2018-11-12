@@ -14,6 +14,8 @@ from tkinter import filedialog
 from tkinter import simpledialog
 import matplotlib.backends.tkagg as tkagg
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
+
 import numpy as np
 import matplotlib.pyplot as plt
 #from scipy import interpolate
@@ -233,11 +235,15 @@ def process():
         except:
             root = tk.Tk()
             root.withdraw()
-            b0vl = float(simpledialog.askstring("Bruker Error", "Enter Magnetic Field in Gauss",
+            try: 
+                b0vl = float(simpledialog.askstring("Bruker Error", "Enter Magnetic Field in Gauss",
                                 parent=root))/10000 #enter field in Gauss and convert to Tesla
-        endorfreq = (300*b0vl)/7.046
-        endorfreqx = (endorfreq-freqx) * (-1)
-        #endor_max = np.where(endorfreqx == np.max(endorfreqx))
+                endorfreq = (300*b0vl)/7.046
+                endorfreqx = (endorfreq-freqx) * (-1)
+            except: 
+                endorfreqx = freqx
+                print("Magnetic field should be a number")
+        
         return endorfreqx 
     
     phaseddata = phase(data)
@@ -281,18 +287,13 @@ class StartPage(tk.Frame):
         label.grid(row = 0, column = 1, sticky = "n") #can use grid here somehow
            
         
-        button1 = tk.Button(self, text = "load file!!!", bg = 'blue', command = load_file) 
+        button1 = tk.Button(self, text = "load file!!!", command = load_file) 
         button1.grid(row = 1, column = 0)
         
         button2 = tk.Button(self, text = "process!!!", command = process) 
         button2.grid(row = 1, column = 2)
      
-        try:
-            f = plt.plot(endorfreqx, processed, linewidth=2)
-            canvas = FigureCanvasTkAgg(f, master=self)
-            canvas.show()
-        except: 
-            pass
+        
        
 app  = endorprocess()
 app.mainloop() #tkinter code; necessary
