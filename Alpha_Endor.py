@@ -205,23 +205,21 @@ def endor_process():
         created in the beginning of the script to find the magnetic field to
         use in the calulation. Returns a frequency x-axis that is centered
         at the nucelar ENDOR frequency."""
-        
         try:
             b0vl = float(str(get_from_dict('B0VL')))
         except:
             root = tk.Tk()
             root.withdraw()
-            b0vl = (float(simpledialog.askstring("Bruke Error",
-                                                "Enter Magnetic Field, G",
-                                                parent=root))/10000)
-            b0vl = int(input('Bruker Error, input Magnetic Field: '))
-            # when we get the GUI all the way together, we can add this as a 
-            # function of a pop-up error window with direct input.
-            # this should allow an input directly in spyder, and is a band-aid
-        endorfreq = (300*b0vl)/7.046
-        endorfreqx = (endorfreq-freqx) * (-1)
-        #endor_max = np.where(endorfreqx == np.max(endorfreqx))
-        return endorfreqx
+            try: 
+                b0vl = float(simpledialog.askstring("Bruker Error", "Enter Magnetic Field in Gauss",
+                                parent=root))/10000 #enter field in Gauss and convert to Tesla
+                endorfreq = (300*b0vl)/7.046
+                endorfreqx = (endorfreq-freqx) * (-1)
+            except: 
+                endorfreqx = freqx
+                print("Magnetic field should be a number")
+        
+        return endorfreqx 
     
 
 #    def pad_axis():
