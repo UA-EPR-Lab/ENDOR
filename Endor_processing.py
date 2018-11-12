@@ -17,8 +17,11 @@ from tkinter import messagebox
 from tkinter import filedialog
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import interpolate
 from scipy.optimize import minimize
 from scipy.signal import savgol_filter
+from scipy import integrate
+
 
 # Choose Files
 root = tk.Tk()
@@ -37,9 +40,11 @@ for i in range(0,len(filenames)):
             messagebox.showinfo("Error", "must be a .DTA file")
 
 # Create data arrays for output
-processed=[0,len(filenames)]
-endorfreqx=[0,len(filenames)]
-freqx=[0,len(filenames)]
+processed = [0, len(filenames)]
+endorfreqx = [0, len(filenames)]
+freqx = [0, len(filenames)]
+x_spline = [0, len(filenames)]
+y_spline = [0, len(filenames)]
 
 # Parent function
 def endor_process():
@@ -218,8 +223,7 @@ def endor_process():
 #         endor_max0 = np.where(endorfreqx[0] == np.max(endorfreqx[0]))
 #         endor_max1 = np.where(endorfreqx[1] == np.max(endorfreqx[1]))
 #         #return xdim_pad
-
-
+    
     
     file_dictionary = create_dict(filename)
     data = read_dta_file(filename)
@@ -232,40 +236,85 @@ def endor_process():
     freqx = buildxy()
     endorfreqx = calc_endorfreq()
     processed = smoothed
+    
+    def spline_interpolation():
+        """using a cubic spline interpolation to create a curve between each 
+        set of 2 points. if no smoothing is desired, s = 0. usually
+        s = m - sqrt(2m) where m = # datapoints (xpts). Order of the spline
+        = k (cubic k = 3)."""
+    
+        x_pre_spline = freqx
+        y_pre_spline = processed
+        xdim = float(get_from_dict('XPTS')[0])
+        # xdim = float(xdim[0])
+        xmin = float(get_from_dict('XMIN')[0])
+        # xmin = float(xmin)
+        xrange = float(get_from_dict('XWID')[0])
+        # xrange = float(xrange)
+        xstep = xrange / xdim
+        tck = interpolate.splrep(x_pre_spline, y_pre_spline)
+        #s = ((xdim) - np.sqrt(2 * (xdim)))
+        x_spline = np.arange(xmin, xmin +xrange, xstep)
+        y_spline = interpolate.splev(x_spline, tck, der=0)
+                
+        return x_spline, y_spline
+    
+    
+    spline = spline_interpolation()
+    x_spline = spline[0]
+    y_spline = spline[1]
+    
 #    pad_def = pad_axis()
 
     expx = np.arange(0, len(processed))
 
     plt.figure(1)
     plt.plot(endorfreqx, processed, linewidth=2)
+    plt.title('Endor Frequency')
     plt.figure(2)
     plt.plot(freqx, processed, linewidth=2)
+    plt.title('RF')
+    plt.figure(3)
+    plt.plot(x_spline, y_spline, linewidth=2)
+    plt.title('Spline function')
+    
     plt.show() #will want to put ths entire plotting section after the 
     # different file sizes function
 
-    return processed, endorfreqx, freqx
+    return processed, endorfreqx, freqx, x_spline, y_spline
 
 for i in range(0,len(filenames)):
     filename = filenamelist[i]
-    processed[i], endorfreqx[i], freqx[i] = endor_process()
+    processed[i], endorfreqx[i], freqx[i], x_spline[i], y_spline[i] = endor_process()
 
-def different_file_sizes ():
-    for i in range(0,len(filenames)):
-        endor_max = np.where(processed == np.max(processed[i]))
-        return endor_max #and endor_max[i]
-endor_max = different_file_sizes()
-# do this out here, but use acubic spline to create ideal data then generate based on user input where you want to graph
-
+# def different_file_sizes ():
+#     for i in range(0,len(filenames)):
+#         endor_max = np.where(processed == np.max(processed[i]))
+#         return endor_max #and endor_max[i]
+# endor_max = different_file_sizes()
+# # do this out here, but use acubic spline to create ideal data then generate based on user input where you want to graph
 
 
 processed_subtracted = [(processed[0]) - (processed[1])]
-plt.figure(3)
+plt.figure(4)
 plt.plot(freqx[0], processed_subtracted[0], linewidth=1)
+plt.title('Subtraction from RF')
 
-
+def optimize_smooth():
+    """this should, ideally, compare the integral of the selection of points
+    [i,i+1] to the total integral of the range [0, end] and generate a ratio.
+    this ratio should then be able to be used to determine whether the new 
+    smoothing should be applied to the selection. Hopefully this will extra-smooth
+    the edges of the signal where there is little emphasis, and can make those
+    edge ranges the same so that when they are subtracted, there is a straight
+    line at 0 which should make for 'pretty' comparison spectra. We'll see how this goes"""
+    for i in range(0, len(processed)):  
+        xstep = float((max(freqx[0]) - min(freqx[0]))) / float(len(freqx[0]))
+        int_point = integrate.simps(y_spline[0], x_spline[0], dx = xstep, even = 'avg')
+optimize_smoothed = optimize_smooth()
 root.destroy()
 
 
-#this works well; it doesn't subtract things yet though.
+
 # needs to be tested with files of different sizes to really see if it works
-# this needs to be tested for actual use; can we run from github, or have to copy to python?
+# I had to comment something so that I could change the description
