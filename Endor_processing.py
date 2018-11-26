@@ -23,6 +23,7 @@ from scipy.signal import savgol_filter
 
 # Choose Files
 root = tk.Tk()
+root.withdraw()
 messagebox.showinfo("For ENDOR Subtractions","First choose file, then choose file to subtract from first file.")
         #root = tk.Tk()
 filenames = filedialog.askopenfilenames(parent=root)
@@ -41,6 +42,7 @@ for i in range(0,len(filenames)):
 processed = [0, len(filenames)]
 endorfreqx = [0, len(filenames)]
 freqx = [0, len(filenames)]
+filtered = [0, len(filenames)]
 x_spline = [0, len(filenames)]
 y_spline = [0, len(filenames)]
 
@@ -165,14 +167,35 @@ def endor_process():
         flipdata = np.subtract(expdata, 1)
         flipdata = flipdata*-1
         return flipdata
+    
+    def filter_data(flipdata):
+        """should serve to filter outliers of +/- 3 std dev using a moving average of a set number of points around 'j' """
+        std_dev = np.std(flipdata)
+        out_low = - 3 * std_dev
+        out_hi = 3 * std_dev
+        win_pct = 0.01
+        win_pts = win_pct * len(flipdata)
+        # 1/2 of percent of total data set observed by the window for moving average
+        # Ideally, will be a changable variable in GUI
+        j = 0
+        while j <= (len(flipdata) -2):
+            j = j+1
+            if flipdata[j] < out_low or flipdata[j] > out_hi:
+                for i in range ((-1 * int(win_pts)), int(win_pts), 1):
+                    flipdata[j] = flipdata[j+i] / (2 * int(win_pts))
+                    # average point value of the moving window
+            else: flipdata[j] = flipdata[j]
+        filtered = flipdata
+        return filtered
+    
 
 
-    def smooth(processed):
+    def smooth(filtered):
         """smoothes using a Savitsky-Golay filter. the default is to fit a 4th
         order polynomial over an odd number of points. this can be changed depending on how
         much you want to smooth. Increase the number of points to smooth more
         """
-        smoothed = savgol_filter(processed, 45, 6)
+        smoothed = savgol_filter(filtered, 45, 6)
         # For future this could be a window that you type the order and the
         # number of points into, and then it will plot it to show you the
         #smooth before moving on
@@ -194,7 +217,8 @@ def endor_process():
         xmin = float(xmin[0])
         xrange = list(map(float, get_from_dict('XWID')))
         xrange = float(xrange[0])
-        xstep = xrange/(xdim_pad-1)
+        xstep = xrange/(xdim_pad - 2)
+                #xdim_pad - 1 for regular data, -2 for glitchy endor test data in 2D
         freqx_n = (np.arange(xmin, xmin+xdim_pad*xstep, xstep))
         return freqx_n
 
@@ -230,7 +254,8 @@ def endor_process():
     baseline_corrected = baseline_correct(lndata)
     expdata = exp(baseline_corrected)
     flipdata = flipdata(expdata)
-    smoothed = smooth(flipdata)
+    filtered = filter_data(flipdata)
+    smoothed = smooth(filtered)
     freqx = buildxy()
     endorfreqx = calc_endorfreq()
     processed = smoothed
@@ -262,7 +287,7 @@ def endor_process():
     x_spline = spline[0]
     y_spline = spline[1]
     
-#    pad_def = pad_axis()
+    # pad_def = pad_axis()
 
     expx = np.arange(0, len(processed))
 
@@ -279,11 +304,11 @@ def endor_process():
     plt.show() #will want to put ths entire plotting section after the 
     # different file sizes function
 
-    return processed, endorfreqx, freqx, x_spline, y_spline
+    return processed, endorfreqx, freqx, x_spline, y_spline, filtered
 
 for i in range(0,len(filenames)):
     filename = filenamelist[i]
-    processed[i], endorfreqx[i], freqx[i], x_spline[i], y_spline[i] = endor_process()
+    processed[i], endorfreqx[i], freqx[i], x_spline[i], y_spline[i], filtered[i] = endor_process()
 
 # def different_file_sizes ():
 #     for i in range(0,len(filenames)):
