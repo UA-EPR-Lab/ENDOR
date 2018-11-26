@@ -243,7 +243,7 @@ class MimsENDOR(ProcessSpectra):
             the x maximum from the dictionary created at the beginning of the
             script. Uses those values to create the x axis."""
 
-            xdim = float("".join(ProcessSpectra.get_from_dict(self, 'XPTS')))
+            xdim = int("".join(ProcessSpectra.get_from_dict(self, 'XPTS')))
             # xdim_string = str(xdim)
             # pad = 0
             # xdim_pad = np.pad(xdim, (pad, pad), 'constant')
@@ -303,7 +303,7 @@ for j in range(0, len(FILENAMELIST)):
     filename = FILENAMELIST[j]
     spectrum = MimsENDOR()
     figure = MimsENDOR.plot(spectrum)
-    spectrumnam = os.path.split(filename)[1]
+    spectrumname = os.path.split(filename)[1]
     plt.title(spectrumname)
     np.savetxt(filename.replace(".DTA", ".txt"),
                np.c_[spectrum.xdata, spectrum.data], delimiter=",")
