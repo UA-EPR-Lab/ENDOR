@@ -22,11 +22,12 @@ from scipy.signal import savgol_filter
 
 # Choose Files
 root = tk.Tk()
-messagebox.showinfo("For ENDOR Subtractions","First choose file, then choose file to subtract from first file.")
+messagebox.showinfo("For ENDOR Subtractions", "First choose file,
+                    then choose file to subtract from first file.")
         #root = tk.Tk()
-filenames = filedialog.askopenfilenames(parent=root)
-filenamelist=[0,len(filenames)]
-for i in range(0,len(filenames)):
+filenames = filedialog.askopenfilenames(parent = root)
+filenamelist = [0,len(filenames)]
+for i in range(0, len(filenames)):
     filenamelist[i]="".join(filenames[i])
     if filenamelist[i].endswith('.DTA'):
         filenamelist[i] = filenamelist[i]
@@ -37,9 +38,9 @@ for i in range(0,len(filenames)):
             messagebox.showinfo("Error", "must be a .DTA file")
 
 # Create data arrays for output
-processed=[0,len(filenames)]
-endorfreqx=[0,len(filenames)]
-freqx=[0,len(filenames)]
+processed = [0,len(filenames)]
+endorfreqx = [0,len(filenames)]
+freqx = [0,len(filenames)]
 
 # Parent function
 def endor_process():
