@@ -24,8 +24,8 @@ from scipy.signal import savgol_filter
 
 # Choose Files
 root = tk.Tk()
+root.withdraw()
 messagebox.showinfo("For ENDOR Subtractions","First choose file, then choose file to subtract from first file.")
-        #root = tk.Tk()
 filenames = filedialog.askopenfilenames(parent=root)
 filenamelist=[0,len(filenames)]
 for i in range(0,len(filenames)):
@@ -174,9 +174,11 @@ def endor_process():
         much you want to smooth. Increase the number of points to smooth more
         """
         smoothed = savgol_filter(processed, 45, 6)
+        
         # For future this could be a window that you type the order and the
         # number of points into, and then it will plot it to show you the
         #smooth before moving on
+        
         return smoothed
 
 
@@ -187,17 +189,21 @@ def endor_process():
         pad = 0
         xdim = list(map(float, get_from_dict('XPTS')))
         xdim = float(xdim[0])
-        xdim_string = str(xdim)
-        pad = 0
-        xdim_pad = np.pad(xdim, (pad, pad), 'constant')
+        
+        # xdim_pad = np.pad(xdim, (pad, pad), 'constant') may be relevant if 
+        # I get back to adjusting for "missing" data points on the ends
         #return xdim_pad
+        
         xmin = list(map(float, get_from_dict('XMIN')))
         xmin = float(xmin[0])
         xrange = list(map(float, get_from_dict('XWID')))
         xrange = float(xrange[0])
-        xstep = xrange/(xdim_pad-1)
-        freqx_n = (np.arange(xmin, xmin+xdim_pad*xstep, xstep))
+        
+        # xstep = xrange/(xdim_pad-1) may be relevant for comparing data size "density" later
+        
+        freqx_n = (np.linspace(xmin, xmin+xrange, num=xdim, endpoint=False))
         return freqx_n
+
 
 
     def calc_endorfreq():
@@ -207,6 +213,8 @@ def endor_process():
         at the nucelar ENDOR frequency."""
         try:
             b0vl = float(str(get_from_dict('B0VL')))
+            endorfreq = (300*b0vl)/7.046
+            endorfreqx = (endorfreq-freqx) * (-1)
         except:
             root = tk.Tk()
             root.withdraw()
