@@ -16,6 +16,7 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 import numpy as np
+from numpy import std
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.optimize import minimize
@@ -40,7 +41,7 @@ for i in range(0,len(filenames)):
             messagebox.showinfo("Error", "must be a .DTA file")
 
 # Create data arrays for output
-processed = [0, len(filenames)]
+filtered = [0, len(filenames)]
 endorfreqx = [0, len(filenames)]
 freqx = [0, len(filenames)]
 x_spline = [0, len(filenames)]
@@ -168,13 +169,31 @@ def endor_process():
         flipdata = flipdata*-1
         return flipdata
 
+    def filter_data(flipdata):
+        """should serve to filter outliers of +/- 3 std dev using a moving average of a set number of points around 'j' """
+        std_dev = np.std(flipdata)
+        out_low = - 3 * std_dev
+        out_hi = 3 * std_dev
+        win_pct = 0.01
+        # percent of total data set observed by the window for moving average,
+        # to be set as a GUI input variable later, = 1/2 the actual desired window size (1/2 on each side of center)
+        j = 0
+        while j <= len(flipdata - 1):
+            j = j+1
+            if flipdata[j] < out_low or flipdata[j] > out_hi:
+                for i in range (-1 * int((win_pct * len(flipdata)), int(win_pct * len(flipdata)), 1)):
+                    flipdata[j] = flipdata[j+i] / int(win_pct *len(flipdata))
+            else: flipdata[j] = flipdata[j]
+            #currently giving argument error for int(), 11/26/18
 
-    def smooth(processed):
+        return filtered
+
+    def smooth(filtered):
         """smoothes using a Savitsky-Golay filter. the default is to fit a 4th
         order polynomial over an odd number of points. this can be changed depending on how
         much you want to smooth. Increase the number of points to smooth more
         """
-        smoothed = savgol_filter(processed, 45, 6)
+        smoothed = savgol_filter(filtered, 45, 6)
         # For future this could be a window that you type the order and the
         # number of points into, and then it will plot it to show you the
         #smooth before moving on
@@ -232,7 +251,8 @@ def endor_process():
     baseline_corrected = baseline_correct(lndata)
     expdata = exp(baseline_corrected)
     flipdata = flipdata(expdata)
-    smoothed = smooth(flipdata)
+    filtered = filter_data(flipdata)
+    smoothed = smooth(filtered)
     freqx = buildxy()
     endorfreqx = calc_endorfreq()
     processed = smoothed
@@ -300,18 +320,18 @@ plt.figure(4)
 plt.plot(freqx[0], processed_subtracted[0], linewidth=1)
 plt.title('Subtraction from RF')
 
-def optimize_smooth():
-    """this should, ideally, compare the integral of the selection of points
-    [i,i+1] to the total integral of the range [0, end] and generate a ratio.
-    this ratio should then be able to be used to determine whether the new 
-    smoothing should be applied to the selection. Hopefully this will extra-smooth
-    the edges of the signal where there is little emphasis, and can make those
-    edge ranges the same so that when they are subtracted, there is a straight
-    line at 0 which should make for 'pretty' comparison spectra. We'll see how this goes"""
-    for i in range(0, len(processed)):  
-        xstep = float((max(freqx[0]) - min(freqx[0]))) / float(len(freqx[0]))
-        int_point = integrate.simps(y_spline[0], x_spline[0], dx = xstep, even = 'avg')
-optimize_smoothed = optimize_smooth()
+# def optimize_smooth():
+#     """this should, ideally, compare the integral of the selection of points
+#     [i,i+1] to the total integral of the range [0, end] and generate a ratio.
+#     this ratio should then be able to be used to determine whether the new 
+#     smoothing should be applied to the selection. Hopefully this will extra-smooth
+#     the edges of the signal where there is little emphasis, and can make those
+#     edge ranges the same so that when they are subtracted, there is a straight
+#     line at 0 which should make for 'pretty' comparison spectra. We'll see how this goes"""
+#     for i in range(0, len(processed)):  
+#         xstep = float((max(freqx[0]) - min(freqx[0]))) / float(len(freqx[0]))
+#         int_point = integrate.simps(y_spline[0], x_spline[0], dx = xstep, even = 'avg')
+# optimize_smoothed = optimize_smooth()
 root.destroy()
 
 
