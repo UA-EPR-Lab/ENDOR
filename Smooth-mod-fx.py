@@ -169,24 +169,47 @@ def endor_process():
         flipdata = flipdata*-1
         return flipdata
 
-    def filter_data(flipdata):
-        """should serve to filter outliers of +/- 3 std dev using a moving average of a set number of points around 'j' """
-        std_dev = np.std(flipdata)
-        out_low = - 3 * std_dev
-        out_hi = 3 * std_dev
-        win_pct = 0.01
-        # percent of total data set observed by the window for moving average,
-        # to be set as a GUI input variable later, = 1/2 the actual desired window size (1/2 on each side of center)
-        j = 0
-        while j <= len(flipdata - 1):
-            j = j+1
-            if flipdata[j] < out_low or flipdata[j] > out_hi:
-                for i in range (-1 * int((win_pct * len(flipdata)), int(win_pct * len(flipdata)), 1)):
-                    flipdata[j] = flipdata[j+i] / int(win_pct *len(flipdata))
-            else: flipdata[j] = flipdata[j]
-            #currently giving argument error for int(), 11/26/18
+    # def filter_data(flipdata):
+    #     """should serve to filter outliers of +/- 3 std dev using a moving average of a set number of points around 'j' """
+    #     std_dev = np.std(flipdata)
+    #     out_low = - 3 * std_dev
+    #     out_hi = 3 * std_dev
+    #     win_pct = 0.01
+    #     flip_pct = int(win_pct * len(flipdata))
+    #     # percent of total data set observed by the window for moving average,
+    #     # to be set as a GUI input variable later, = 1/2 the actual desired window size (1/2 on each side of center)
+    #     j = -1
+    #     while j < (len(flipdata) - 1):
+    #         j = j+1
+    #         if flipdata[j] < out_low or flipdata[j] > out_hi:
+    #             for i in range ((-1 * flip_pct), flip_pct, 1):
+    #                 flipdata[j] = flipdata[j+i] / (win_pct *len(flipdata))
+    #         else: flipdata[j] = flipdata[j]
+    #         #currently giving argument error for int(), 11/26/18
+    #     filtered = flipdata
+    #     return filtered
 
+    def filter_data(flipdata):
+        """this attempt tries to rectify the standard deviation to be within the
+        window, and not over the entire graph using the same +/- 3 std dev
+        currently need to set up a fix--index error on line defining std_dev"""
+        
+        win_pct = 0.01
+        flip_pct = int(win_pct * len(flipdata))
+        j = -1
+        while  j < (len(flipdata) - 1):
+            for i in range ((-1 * flip_pct), flip_pct, 1):
+                std_dev = np.std(flipdata[-flip_pct, flip_pct])
+                # want to do std dev within the scope of the window
+                d = 3
+                out_low = -d * std_dev
+                out_hi = d * std_dev
+                if flipdata[j] < out_low or flipdata[j] > out_hi:
+                    flipdata[j] = flipdata[j+i] / (2 * win_pct)
+                else: flipdata[j] = flipdata[j]
+        filtered = flipdata
         return filtered
+    
 
     def smooth(filtered):
         """smoothes using a Savitsky-Golay filter. the default is to fit a 4th
@@ -215,7 +238,7 @@ def endor_process():
         xmin = float(xmin[0])
         xrange = list(map(float, get_from_dict('XWID')))
         xrange = float(xrange[0])
-        xstep = xrange/(xdim_pad-1)
+        xstep = xrange/(xdim_pad-2)
         freqx_n = (np.arange(xmin, xmin+xdim_pad*xstep, xstep))
         return freqx_n
 
@@ -280,32 +303,34 @@ def endor_process():
         return x_spline, y_spline
     
     
-    spline = spline_interpolation()
-    x_spline = spline[0]
-    y_spline = spline[1]
+   # spline = spline_interpolation()
+    #x_spline = spline[0]
+    #y_spline = spline[1]
     
 #    pad_def = pad_axis()
 
     expx = np.arange(0, len(processed))
 
     plt.figure(1)
-    plt.plot(endorfreqx, processed, linewidth=2)
-    plt.title('Endor Frequency')
+    plt.plot(endorfreqx, processed, linewidth=1)
+    plt.title('smoothed')
     plt.figure(2)
-    plt.plot(freqx, processed, linewidth=2)
-    plt.title('RF')
+    plt.plot(endorfreqx, flipdata, linewidth=1)
+    plt.title('flipdata')
     plt.figure(3)
-    plt.plot(x_spline, y_spline, linewidth=2)
-    plt.title('Spline function')
+    plt.plot(endorfreqx, filtered, linewidth=1)
+    plt.title('filtered')
     
     plt.show() #will want to put ths entire plotting section after the 
     # different file sizes function
 
-    return processed, endorfreqx, freqx, x_spline, y_spline
+    return processed, endorfreqx, freqx, filtered
+#, x_spline, y_spline
 
 for i in range(0,len(filenames)):
     filename = filenamelist[i]
-    processed[i], endorfreqx[i], freqx[i], x_spline[i], y_spline[i] = endor_process()
+    processed[i], endorfreqx[i], freqx[i], filtered[i] = endor_process()
+    # x_spline[i], y_spline[i]
 
 # def different_file_sizes ():
 #     for i in range(0,len(filenames)):
