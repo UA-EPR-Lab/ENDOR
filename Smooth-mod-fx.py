@@ -2,7 +2,7 @@
 """
 Created on Sat Oct 27 10:56:57 2018
 
-@author: Joe
+@author: Joe Butler
 """
 
 """processes ENDOR files from the raw data file. Takes Bruker .DTA files and
@@ -16,12 +16,10 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 import numpy as np
-from numpy import std
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.optimize import minimize
 from scipy.signal import savgol_filter
-from scipy import integrate
 
 
 # Choose Files
@@ -195,18 +193,33 @@ def endor_process():
         currently need to set up a fix--index error on line defining std_dev"""
         
         win_pct = 0.01
-        flip_pct = int(win_pct * len(flipdata))
+        window = int(win_pct * len(flipdata))
+        deviation = 2
+        avg = 3
+        
         j = -1
-        while  j < (len(flipdata) - 1):
-            for i in range ((-1 * flip_pct), flip_pct, 1):
-                std_dev = np.std(flipdata[-flip_pct, flip_pct])
-                # want to do std dev within the scope of the window
-                d = 3
-                out_low = -d * std_dev
-                out_hi = d * std_dev
+        while  j < (len(flipdata) - (avg +1)):
+            j = j + 1
+            
+            try:
+                for i in range ((-1 * window), window):
+                    if j < (len(flipdata) - window - 1) and j > (len(flipdata) + window):
+                        std_dev = np.std(range(flipdata[j - window], flipdata[j + window]))
+                    else: std_dev = np.std(flipdata)
+
+                out_low = -deviation * std_dev
+                out_hi = deviation * std_dev
+            except TypeError as e1:
+                print(e1)
+                
+            try:
                 if flipdata[j] < out_low or flipdata[j] > out_hi:
-                    flipdata[j] = flipdata[j+i] / (2 * win_pct)
+                    for k in range (-avg, avg + 1):
+                        flipdata[j] = np.average(flipdata[j + k])
                 else: flipdata[j] = flipdata[j]
+            except TypeError as e2:
+                print(e2)
+                    
         filtered = flipdata
         return filtered
     
@@ -216,7 +229,10 @@ def endor_process():
         order polynomial over an odd number of points. this can be changed depending on how
         much you want to smooth. Increase the number of points to smooth more
         """
-        smoothed = savgol_filter(filtered, 45, 6)
+        points = 45
+        poly = 6
+        
+        smoothed = savgol_filter(filtered, points, poly)
         # For future this could be a window that you type the order and the
         # number of points into, and then it will plot it to show you the
         #smooth before moving on
@@ -278,7 +294,7 @@ def endor_process():
     smoothed = smooth(filtered)
     freqx = buildxy()
     endorfreqx = calc_endorfreq()
-    processed = smoothed
+    #processed = smoothed
     
     def spline_interpolation():
         """using a cubic spline interpolation to create a curve between each 
@@ -287,7 +303,7 @@ def endor_process():
         = k (cubic k = 3)."""
     
         x_pre_spline = freqx
-        y_pre_spline = processed
+        y_pre_spline = smoothed
         xdim = float(get_from_dict('XPTS')[0])
         # xdim = float(xdim[0])
         xmin = float(get_from_dict('XMIN')[0])
@@ -309,10 +325,10 @@ def endor_process():
     
 #    pad_def = pad_axis()
 
-    expx = np.arange(0, len(processed))
+    expx = np.arange(0, len(smoothed))
 
     plt.figure(1)
-    plt.plot(endorfreqx, processed, linewidth=1)
+    plt.plot(endorfreqx, smoothed, linewidth=1)
     plt.title('smoothed')
     plt.figure(2)
     plt.plot(endorfreqx, flipdata, linewidth=1)
@@ -324,12 +340,12 @@ def endor_process():
     plt.show() #will want to put ths entire plotting section after the 
     # different file sizes function
 
-    return processed, endorfreqx, freqx, filtered
+    return smoothed, endorfreqx, freqx, filtered
 #, x_spline, y_spline
 
 for i in range(0,len(filenames)):
     filename = filenamelist[i]
-    processed[i], endorfreqx[i], freqx[i], filtered[i] = endor_process()
+    smoothed[i], endorfreqx[i], freqx[i], filtered[i] = endor_process()
     # x_spline[i], y_spline[i]
 
 # def different_file_sizes ():
@@ -340,10 +356,10 @@ for i in range(0,len(filenames)):
 # # do this out here, but use acubic spline to create ideal data then generate based on user input where you want to graph
 
 
-processed_subtracted = [(processed[0]) - (processed[1])]
-plt.figure(4)
-plt.plot(freqx[0], processed_subtracted[0], linewidth=1)
-plt.title('Subtraction from RF')
+#processed_subtracted = [(processed[0]) - (processed[1])]
+#plt.figure(4)
+#plt.plot(freqx[0], processed_subtracted[0], linewidth=1)
+#plt.title('Subtraction from RF')
 
 # def optimize_smooth():
 #     """this should, ideally, compare the integral of the selection of points
