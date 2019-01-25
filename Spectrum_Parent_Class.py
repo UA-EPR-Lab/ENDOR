@@ -2,7 +2,7 @@
 """
 Created on Wed Jan 16 12:08:45 2019
 
-@author: Student
+@author: Molly Lockart / Joe Butler
 """
 
 ##############################################################################

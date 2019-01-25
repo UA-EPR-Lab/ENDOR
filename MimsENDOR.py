@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# @author: Joe Butler
+# @author: Molly Lockart / Joe Butler
 #child class of SpecData. Initializes SpecData to create the amplitudes and
 # axes.
 

@@ -2,7 +2,7 @@
 """
 Created on Wed Jan 23 11:24:07 2019
 
-@author: Student
+@author: Molly Lockart / Joe Butler
 """
 import numpy as np
 from scipy.optimize import minimize
