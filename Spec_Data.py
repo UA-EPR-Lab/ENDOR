@@ -133,8 +133,7 @@ class Spec_Data:
         else:
             return self.y_unit
 
-# methods for plotting here, interpolation, smoothing, phasing, baseline
-# correction with polynomial input for multiple corrections
+# methods for plotting here, interpolation, smoothing, phasing
 
 
 #    def lineplot(self):

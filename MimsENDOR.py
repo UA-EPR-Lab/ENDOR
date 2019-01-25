@@ -10,6 +10,8 @@
 from Spec_Data import Spec_Data
 import numpy as np
 import tkinter as tk
+from tkinter import simpledialog
+from scipy.signal import savgol_filter
 
 ##############################################################################
 ##############################################################################
@@ -24,7 +26,7 @@ class MimsENDOR(Spec_Data):
         # to be processed further.
         print(len(self.phased))
         # this is just to check that it knows what self.amp is.
-        
+
         self.lndata = np.log1p(self.phased)
 
         def baseline_correct(self):
@@ -66,37 +68,37 @@ class MimsENDOR(Spec_Data):
 
             return flipdata
 
-        def filter_data(self):
+        def deglitch(self):
 
             """this attempt tries to rectify the standard deviation to be within the
             window, and not over the entire graph using the same +/- 3 std dev
             currently need to set up a fix--index error on line defining std_dev"""
 
-            fixeddata = np.copy(self.flipdata)
+            deglitched = np.copy(self.flipdata)
             win_pct = 0.01
-            window = int(win_pct * len(fixeddata))
+            window = int(win_pct * len(deglitched))
             deviation = 5
 
             j = -1
 
-            while  j < (len(fixeddata) - window - 1):
+            while  j < (len(deglitched) - window - 1):
 
                 j = j + 1
 
                 # detect the glitch
-                if j <  window - 1 or j > (len(fixeddata) - window):
-                    fixeddata[j] = fixeddata[j]
+                if j <  window - 1 or j > (len(deglitched) - window):
+                    deglitched[j] = deglitched[j]
 
                 else:
 
                     arrays = np.arange((j - window),j), np.arange((j + 1) , (j + window + 1))
                     dev_range = np.append(arrays[0], arrays[1])
-                    std_dev_compare = np.std(fixeddata[dev_range])
-                    average = np.average(fixeddata[dev_range])
+                    std_dev_compare = np.std(deglitched[dev_range])
+                    average = np.average(deglitched[dev_range])
 
-                    if abs(fixeddata[j] - average) > deviation * std_dev_compare:
-                        fixeddata[j] = average
-            return fixeddata
+                    if abs(deglitched[j] - average) > deviation * std_dev_compare:
+                        deglitched[j] = average
+            return deglitched
 
         def smooth(self):
 
@@ -108,8 +110,8 @@ class MimsENDOR(Spec_Data):
             application_window = tk.Tk()
             application_window.withdraw()
 
-            order_pts = np.simpledialog.askstring("Savitsky-Golay Filter Options",
-                                               "Enter: polynomial order (0-6), number of smoothing points (e.g.: 4,15)",
+            order_pts = simpledialog.askstring("Savitsky-Golay Filter Options",
+                                               "Enter: polynomial order (0-6), ODD number of smoothing points (e.g.: 4,15)",
                                 parent=application_window)
             try:
                 order = int(order_pts[0])
@@ -119,10 +121,23 @@ class MimsENDOR(Spec_Data):
                 order = 4
                 pts = 15
 
-            smoothed = np.savgol_filter(self.deglitched, pts, order)
+            smoothed = savgol_filter(self.deglitched, pts, order)
 
             return smoothed
-        
+##############################################################################
+##############################################################################
+# initialization variables
+
+        self.baseline_corrected = baseline_correct(self)
+        self.expdata = exp(self)
+        self.flipdata = flip(self)
+        self.deglitched = deglitch(self)
+        self.smoothed = smooth(self)
+
+##############################################################################
+##############################################################################
+# class methods
+
     def calc_endorfreq(self):
 
             """calculates the ENDOR frequency for a proton. Uses the dictionary
@@ -131,7 +146,8 @@ class MimsENDOR(Spec_Data):
             at the nucelar ENDOR frequency."""
 
             try:
-                b0vl = float("".join(self.metadata('B0VL')))
+                # b0vl = float("".join(self.metadata['B0VL'])
+                b0vl = float(self.metadata['B0VL'])
             except KeyError:
                 root = tk.Tk()
                 root.withdraw()
@@ -143,12 +159,12 @@ class MimsENDOR(Spec_Data):
                             parent=root)
                     ) / 10000  # enter field in Gauss and convert to Tesla
                 except NameError:
-                    endorfreqx = self.spectrum.xdata
+                    endorfreqx = self.x_axis
                     print("Magnetic field should be a number")
                     return endorfreqx
             endorfreq = (300 * b0vl) / 7.046
-            endorfreqx = (endorfreq - self.xdata) * (-1)
+            endorfreqx = (endorfreq - self.x_axis) * (-1)
 
             return endorfreqx
-        
+
 

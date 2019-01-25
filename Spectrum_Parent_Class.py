@@ -154,11 +154,11 @@ class Spectrum:
         """makes a line plot from x and y data and saves it as a .tif figure"""
 
         plt.figure()
-        plt.plot(self.spect.return_axis('x'), self.spect.amp.real, 'k', linewidth=1.5)
-        plt.plot(self.spect.return_axis('x'), self.spect.phased_complex.imag, 'r', linewidth=1.5)
+        #plt.plot(self.spect.calc_endorfreq(), self.spect.smoothed, 'k', linewidth=1.5)
+        # plt.plot(self.spect.return_axis('x'), self.spect.phased_complex.imag, 'r', linewidth=1.5)
         plt.plot(self.spect.return_axis('x'), self.spect.phased, 'b', linewidth=1.5)
 
-        plt.xlim([self.spect.return_axis('x')[0], self.spect.return_axis('x')[-1]])
+        # plt.xlim([self.spect.return_axis('x')[0], self.spect.return_axis('x')[-1]])
         plt.xlabel('ENDOR Frequency ('+self.spect.return_units('x')+')', fontsize=14)
         plt.ylabel('Absolute ENDOR Effect', fontsize=14)
         plt.tick_params(labelsize=12)
