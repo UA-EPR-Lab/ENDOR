@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 
 # Our processing classes
 from MimsENDOR import MimsENDOR
+from HYSCORE import HYSCORE
 
 ##############################################################################
 ##############################################################################
@@ -137,7 +138,8 @@ class Spectrum:
             # data that needs to be processed
 
         elif self.spec_type == "HYSCORE":
-            pass
+            self.spect = HYSCORE(self.metadata, self.ffilename)
+            #newest attempted addition, untested as of 1/31/19 am
 
         elif self.spec_type == "Log T1e":
             pass
