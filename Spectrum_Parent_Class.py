@@ -139,7 +139,7 @@ class Spectrum:
 
         elif self.spec_type == "HYSCORE":
             self.spect = HYSCORE(self.metadata, self.ffilename)
-            #newest attempted addition, untested as of 1/31/19 am
+            #newest attempted addition, untested as of 1/31/19 10:30AM
 
         elif self.spec_type == "Log T1e":
             pass
