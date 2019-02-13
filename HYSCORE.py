@@ -13,12 +13,12 @@ class Hyscore(Spec_Data):
     """This is a subclass that processes HYSCORE spectra."""
 
     def __init__(self, metadata, full_file_name):
-        super().__init__(self. full_file_name)
+        super().__init__( metadata, full_file_name)
 
         def baseline_correct(self):
-            
+
             """SAMPLE DOCSTRING this baseline corrects both the x and y axis"""
-            
+
             x_a = np.arange(0, len(self.phased))
             # vector the same length as the data in one direction
 
@@ -37,15 +37,15 @@ class Hyscore(Spec_Data):
                 self.phased[:, i] = self.phased[:, i]-baseline
                 base[:, i] = base[:, i]+baseline
                 self.baseline_corrected = self.phased
-                
+
             return self.baseline_corrected
 
 
         def Butler_mize_window(self):
-            
+
             """SAMPLE DOCSTRING this is windowing the data from an improved
             diagonal blackman window that can change the width of the window"""
-            
+
             wind = np.ones([1, dim_matrix*2])
             a_0 = (1-alpha_0)/2
             a_1 = 1/2
@@ -78,26 +78,24 @@ class Hyscore(Spec_Data):
             wind2[0, dim_matrix-1] = 0
             wind3 = (wind2*(np.ones([dim_matrix, dim_matrix])))
             windowed = self.baseline_corrected*wind3*np.transpose(wind3)*dwind
-            
+
             return windowed
 
 
         def fourier_transform2d(self):
-            
+
             """ SAMPLE DOCSTRING 2D Fourier transform. Data is zerofilled
             (a matrix of all zeros is created and data is dropped in it) first.
             The transform is shifted so zero frequency is in the middle."""
-            
-            zerofill = np.zeros([512, 512])
+
+            zerofill = np.zeros(1024 * np.array([1,1])) #so it will always be square
             zerofill[:len(self.windowed), :len(self.windowed)] = self.windowed
             transform = np.fft.fft2(zerofill)
-            transform = np.fft.fftshift(transform)
+            transform = np.fft.fftshift(transform) # shift center to zero
             transformed = np.absolute(transform)
             tmax = transformed.max()
-            zdata = (transformed - 0)/(tmax - 0)
-            # if you want a minimum at zero for your normalized plot,
-            # then replace zero with the min.
-            
+            zdata = (transformed)/(tmax) # normalize to maximum value
+
             return zdata
 
 
@@ -122,7 +120,7 @@ class Hyscore(Spec_Data):
             freq = np.arange(-frwidth, frwidth, frinc*2)
             xdata = freq
             ydata = freq
-            
+
             return xdata, ydata
 
         dim_matrix = len(self.phased)
@@ -136,3 +134,4 @@ class Hyscore(Spec_Data):
         self.zdata = np.log(fourier_transform2d(self))
         self.xdata = buildxy(self)[0]
         self.ydata = buildxy(self)[1]
+
