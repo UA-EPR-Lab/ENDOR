@@ -23,13 +23,13 @@ from tkinter import filedialog
 #from tkinter import ttk
 import numpy as np
 import matplotlib.pyplot as plt
-#from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap
 #from scipy.optimize import minimize
 #from scipy.signal import savgol_filter
 
 # Our processing classes
 from MimsENDOR import MimsENDOR
-from HYSCORE import HYSCORE
+from HYSCORE import Hyscore
 
 ##############################################################################
 ##############################################################################
@@ -107,10 +107,10 @@ class Spectrum:
             exp = metadata.get('PlsSPELEXPSlct', "Unknown")
 
             # now select child class of Spectrum
-            if 'Mims ENDOR ESE' or 'Mims ENDOR' in exp:
+            if exp == 'Mims ENDOR ESE' or exp == 'Mims ENDOR':
                 # an ENDOR spectrum
                 spectype = "ENDOR"
-            elif 'HYSCORE' or 'HYSCORE Split' in exp:
+            elif exp == 'HYSCORE' or exp =='HYSCORE Split':
                 # HYSCORE spectrum
                 spectype = "HYSCORE"
             elif exp == 'Log T1 Recovery':
@@ -134,11 +134,8 @@ class Spectrum:
             self.spect = MimsENDOR(self.metadata, self.filename)  # contains Amps and Coords
             # self.spect = MimsENDOR(amp, x_axis, x_unit)  # contains Amps and Coords
 
-            # this is the part that doesn't work so far. self.amp is the raw y
-            # data that needs to be processed
-
         elif self.spec_type == "HYSCORE":
-            self.spect = HYSCORE(self.metadata, self.ffilename)
+            self.spect = Hyscore(self.metadata, self.filename)
             #newest attempted addition, untested as of 1/31/19 10:30AM
 
         elif self.spec_type == "Log T1e":
@@ -158,7 +155,7 @@ class Spectrum:
         plt.figure()
         #plt.plot(self.spect.calc_endorfreq(), self.spect.smoothed, 'k', linewidth=1.5)
         # plt.plot(self.spect.return_axis('x'), self.spect.phased_complex.imag, 'r', linewidth=1.5)
-        plt.plot(self.spect.return_axis('x'), self.spect.phased, 'b', linewidth=1.5)
+        plt.plot(self.spect.return_axis('x'), self.spect.smoothed, 'b', linewidth=1.5)
 
         # plt.xlim([self.spect.return_axis('x')[0], self.spect.return_axis('x')[-1]])
         plt.xlabel('ENDOR Frequency ('+self.spect.return_units('x')+')', fontsize=14)
@@ -167,15 +164,45 @@ class Spectrum:
         save = [self.filename.replace(".DTA", ".tiff")]
         plt.savefig("".join(save), dpi=100, bbox_inches='tight', format="tiff")
 
+    def contour_plot(self):
+
+        """makes a contour plot from x and y data and saves it as tif figure"""
+
+        plt.figure()
+        colors = ['w', 'royalblue', 'limegreen', 'gold', 'coral', 'firebrick']
+        density_cmap = LinearSegmentedColormap.from_list('my_cmap', colors)
+
+        try:
+            vmin = np.ndarray.max(self.spect.zdata[1]) + 0.0 # roughly twice the level of the noise was at 0.3
+            plt.contourf(self.spect.xdata, self.spect.ydata, self.spect.zdata, 60,
+                     cmap=density_cmap, vmin=vmin, vmax=0) # zero max because take the log of the FFT after normalization to max value of 1 contour levels were at 60
+
+        except ValueError:
+            vmin = np.ndarray.min(self.spect.zdata[1])
+            plt.contourf(self.spect.xdata, self.spect.ydata, self.spect.zdata, 60,
+                     cmap=density_cmap, vmin=vmin, vmax=0)
+
+        # plt.colorbar()
+        # more color contours = lower vmax
+        # more noise = lower vmin
+        #title = get_from_dict('TITL')
+        #plt.title(title)
+        plt.gca().set_aspect('equal')
+        plt.ylabel('Frequency (MHz)', fontsize=12)
+        plt.xlabel('Frequency (MHz)', fontsize=12)
+        plt.tick_params(labelsize=12)
+        save = [self.filename, ".tiff"]
+        plt.savefig("".join(save), dpi=100, bbox_inches='tight', format="tiff")
+
 # SpecData.return_xaxis
 #############################################################################
 #############################################################################
 # Executed Code
 
 def choose_files():
+
     """choose files from file dialog box;
-    either the Bruker Elexsys .DTA;
-        or any other type"""
+    displays Bruker .DTA files"""
 
     root = tk.Tk()
     root.withdraw()
@@ -186,11 +213,14 @@ def choose_files():
         filetypes=[('Bruker', '.DTA'), ('all', '.*')])
     return filenamelist
 
-
-# Test what is here so far
 FILENAMELIST = choose_files()
 THE_SPECTRUM = list()
 
 for j in range(0, len(FILENAMELIST)):
     THE_SPECTRUM.append(Spectrum(FILENAMELIST[j]))
-    THE_SPECTRUM[j].lineplot()
+
+    if THE_SPECTRUM[j].spec_type == "ENDOR":
+        THE_SPECTRUM[j].lineplot()
+
+    elif THE_SPECTRUM[j].spec_type == "HYSCORE":
+        THE_SPECTRUM[j].contour_plot()
