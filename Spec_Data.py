@@ -112,8 +112,8 @@ class Spec_Data:
         (self.x_axis, self.x_unit) = buildaxis(self, 'X')
 
         # Builds the y axis too if two dimsntional (HYSCORE)
-        if not self.onedim:
-            (self.yaxis, self.yunit) = buildaxis(self, 'Y')
+        if self.onedim == False:
+            (self.y_axis, self.yunit) = buildaxis(self, 'Y')
 
         (self.phased, self.phi, self.phased_complex) = phase(self)
 
