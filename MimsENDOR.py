@@ -111,15 +111,15 @@ class MimsENDOR(Spec_Data):
             application_window.withdraw()
 
             order_pts = simpledialog.askstring("Savitsky-Golay Filter Options",
-                                               "Enter: polynomial order (0-6), ODD number of smoothing points (e.g.: 4,15)",
+                                               "Enter: Polynomial order (0-6), and ODD number of smoothing points. Default (4,15)",
                                 parent=application_window)
             try:
                 order = int(order_pts[0])
                 pts = int(order_pts[2:])
 
-            except TypeError:
-                order = 4
-                pts = 15
+            except Exception:
+                order_pts = [4, 15]
+                
 
             smoothed = savgol_filter(self.deglitched, pts, order)
 
