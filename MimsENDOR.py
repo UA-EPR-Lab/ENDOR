@@ -109,18 +109,63 @@ class MimsENDOR(Spec_Data):
 
             application_window = tk.Tk()
             application_window.withdraw()
-
             order_pts = simpledialog.askstring("Savitsky-Golay Filter Options",
-                                               "Enter: Polynomial order (0-6), and ODD number of smoothing points. Default (4,15)",
+                                               """Enter: Polynomial order (0-6), and ODD number of smoothing points. 
+            Default (4,15)""",
                                 parent=application_window)
+            
             try:
-                order = int(order_pts[0])
+                order = int(order_pts[0]) 
+                if order > 6:
+                    order = 6
+                    application_window = tk.Tk()
+                    application_window.withdraw()
+                    simpledialog.messagebox.showerror("Polynomial Error",
+                                                  """Invalid Sav-Gol Polynomial Order input detected. 
+            Max (6) selected""",
+                                                  parent = application_window)
                 pts = int(order_pts[2:])
-
-            except Exception:
-                order_pts = [4, 15]
                 
-
+                if (pts/2) - np.round((pts / 2)) > 0:
+                    pts = pts
+                else:
+                    pts = pts -1
+                    application_window = tk.Tk()
+                    application_window.withdraw()
+                    simpledialog.messagebox.showerror("Point Error",
+                                                  """Invalid Sav-Gol Point input detected. 
+            Rounded down to next odd number""",
+                                                  parent = application_window)
+                    
+                if pts > 49:
+                    pts = 49
+                    application_window = tk.Tk()
+                    application_window.withdraw()
+                    simpledialog.messagebox.showerror("Point Error",
+                                                  """Invalid Sav-Gol Point input detected. 
+            Max (49) selected""",
+                                                  parent = application_window)
+                
+            except ValueError:
+                order_pts = [4, 15]
+                application_window = tk.Tk()
+                application_window.withdraw()
+                
+                simpledialog.messagebox.showerror("ValueError",
+                                                  """Invalid Sav-Gol parameter input detected. 
+            Defualt (4,15) selected""",
+                                                  parent = application_window)
+                
+            except IndexError:
+                order_pts = [4, 15]
+                application_window = tk.Tk()
+                application_window.withdraw()
+                
+                simpledialog.messagebox.showerror("IndexError",
+                                                  """Invalid Sav-Gol parameter input detected.
+            Defualt (4,15) selected""",
+                                                  parent = application_window)            
+            
             smoothed = savgol_filter(self.deglitched, pts, order)
 
             return smoothed
