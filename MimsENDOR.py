@@ -107,10 +107,14 @@ class MimsENDOR(Spec_Data):
             changed depending on how much you want to smooth. Increase the
             number of points to smooth."""
 
+            # errors and exceptions mean to keep user input within the bounds
+            # of [0-6, 1-49 (odd)] and if ooutside, to return to the defualt.
+            
             application_window = tk.Tk()
             application_window.withdraw()
             order_pts = simpledialog.askstring("Savitsky-Golay Filter Options",
-                                               """Enter: Polynomial order (0-6), and ODD number of smoothing points. 
+                                               """Enter: Polynomial order (6 = max), and ODD number of smoothing points (49 = max.
+            No space accepted in input.
             Default (4,15)""",
                                 parent=application_window)
             
@@ -124,7 +128,7 @@ class MimsENDOR(Spec_Data):
                                                   """Invalid Sav-Gol Polynomial Order input detected. 
             Max (6) selected""",
                                                   parent = application_window)
-                pts = int(order_pts[2:])
+                pts = int(order_pts[1])
                 
                 if (pts/2) - np.round((pts / 2)) > 0:
                     pts = pts
@@ -147,17 +151,18 @@ class MimsENDOR(Spec_Data):
                                                   parent = application_window)
                 
             except ValueError:
-                order_pts = [4, 15]
+                order_pts = [4,15]
                 application_window = tk.Tk()
                 application_window.withdraw()
                 
                 simpledialog.messagebox.showerror("ValueError",
-                                                  """Invalid Sav-Gol parameter input detected. 
+                                                  """Invalid Sav-Gol TEST parameter input detected.
+            No space accepted in input.
             Defualt (4,15) selected""",
                                                   parent = application_window)
                 
             except IndexError:
-                order_pts = [4, 15]
+                order_pts = [4,15]
                 application_window = tk.Tk()
                 application_window.withdraw()
                 
@@ -165,6 +170,10 @@ class MimsENDOR(Spec_Data):
                                                   """Invalid Sav-Gol parameter input detected.
             Defualt (4,15) selected""",
                                                   parent = application_window)            
+                
+            order = order_pts[0]
+            pts = order_pts[1]
+            
             
             smoothed = savgol_filter(self.deglitched, pts, order)
 
