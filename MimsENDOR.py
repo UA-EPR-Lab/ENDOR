@@ -113,7 +113,7 @@ class MimsENDOR(Spec_Data):
             application_window = tk.Tk()
             application_window.withdraw()
             order_pts = simpledialog.askstring("Savitsky-Golay Filter Options",
-                                               """Enter: Polynomial order (6 = max), and ODD number of smoothing points (49 = max.
+                                               """Enter: Polynomial order (6 = max), and ODD number of smoothing points (49 = max)
             No space accepted in input.
             Default (4,15)""",
                                 parent=application_window)
